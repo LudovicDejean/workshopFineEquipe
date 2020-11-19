@@ -10,9 +10,13 @@ import ntpath
 import datetime
 from datetime import datetime as dt
 
-from collections import Counter
+class employee:  
+    def __init__(self, name, timestamp):  
+        self.name = name  
+        self.timestamp = timestamp 
 
-
+global name_time
+name_time = []
 
 parser = argparse.ArgumentParser(description='Easy Facial Recognition App')
 parser.add_argument('-i', '--input', type=str, required=True, help='directory of input known faces')
@@ -24,14 +28,6 @@ pose_predictor_5_point = dlib.shape_predictor("pretrained_model/shape_predictor_
 face_encoder = dlib.face_recognition_model_v1("pretrained_model/dlib_face_recognition_resnet_model_v1.dat")
 face_detector = dlib.get_frontal_face_detector()
 print('[INFO] Importing pretrained model..')
-
-class employee:  
-    def __init__(self, name, timestamp):  
-        self.name = name  
-        self.timestamp = timestamp 
-
-global name_time
-name_time = []
 
 def transform(image, face_locations):
     coord_faces = []
@@ -57,7 +53,6 @@ def encode_face(image):
     return face_encodings_list, face_locations, landmarks_list
 
 def calcul_work_time(name_time):
-    time = []
     #Recupération des employées présent aujourd'hui
     list_name = {employee.name for employee in name_time}
     for name in list_name:
@@ -66,8 +61,8 @@ def calcul_work_time(name_time):
             if (employee.name == name):
                 calcul_time.append(employee.timestamp)
                 if (len(calcul_time) == 2):
-                    a = dt.strptime(calcul_time[1],"%x, %H:%M") - dt.strptime(calcul_time[0],"%x, %H:%M")
-                    print(employee.name + " Worked for  " + str(a.seconds / 60) + " minute")
+                    duree = dt.strptime(calcul_time[1],"%x, %H:%M") - dt.strptime(calcul_time[0],"%x, %H:%M")
+                    print(employee.name + " Worked for  " + str(duree.seconds / 60) + " minute")
 
     
 
@@ -102,7 +97,7 @@ def easy_face_reco(frame, known_face_encodings, known_face_names):
             else:
                 name_time.append(employee_stamp)
         else:
-            name = "Unknown"
+            name = "Inconnu"
         face_names.append(name)
 
     for (top, right, bottom, left), name in zip(face_locations_list, face_names):
@@ -150,4 +145,3 @@ if __name__ == '__main__':
     print('[INFO] Stopping System')
     video_capture.release()
     cv2.destroyAllWindows()
-    #Envoyer a la BDD le tableau name_time

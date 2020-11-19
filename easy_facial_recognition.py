@@ -7,6 +7,17 @@ import argparse
 from pathlib import Path
 import os
 import ntpath
+import datetime
+from datetime import datetime as dt
+
+class employee:  
+    def __init__(self, name, timestamp):  
+        self.name = name  
+        self.timestamp = timestamp 
+
+global name_time
+name_time = []
+
 parser = argparse.ArgumentParser(description='Easy Facial Recognition App')
 parser.add_argument('-i', '--input', type=str, required=True, help='directory of input known faces')
 
@@ -17,7 +28,6 @@ pose_predictor_5_point = dlib.shape_predictor("pretrained_model/shape_predictor_
 face_encoder = dlib.face_recognition_model_v1("pretrained_model/dlib_face_recognition_resnet_model_v1.dat")
 face_detector = dlib.get_frontal_face_detector()
 print('[INFO] Importing pretrained model..')
-
 
 def transform(image, face_locations):
     coord_faces = []
@@ -42,6 +52,19 @@ def encode_face(image):
     face_locations = transform(image, face_locations)
     return face_encodings_list, face_locations, landmarks_list
 
+def calcul_work_time(name_time):
+    #Recupération des employées présent aujourd'hui
+    list_name = {employee.name for employee in name_time}
+    for name in list_name:
+        calcul_time = []
+        for employee in name_time:
+            if (employee.name == name):
+                calcul_time.append(employee.timestamp)
+                if (len(calcul_time) == 2):
+                    duree = dt.strptime(calcul_time[1],"%x, %H:%M") - dt.strptime(calcul_time[0],"%x, %H:%M")
+                    print(employee.name + " Worked for  " + str(duree.seconds / 60) + " minute")
+
+    
 
 def easy_face_reco(frame, known_face_encodings, known_face_names):
     rgb_small_frame = frame[:, :, ::-1]
@@ -63,8 +86,18 @@ def easy_face_reco(frame, known_face_encodings, known_face_names):
         if True in result:
             first_match_index = result.index(True)
             name = known_face_names[first_match_index]
+            now = datetime.datetime.now()
+            today = now.strftime("%x, %H:%M")
+            employee_stamp = employee(name, today)
+            if len(name_time) > 0:
+                last_entry = name_time[-1]
+                last_name = last_entry.name
+                if last_name != name:
+                    name_time.append(employee_stamp)
+            else:
+                name_time.append(employee_stamp)
         else:
-            name = "Unknown"
+            name = "Inconnu"
         face_names.append(name)
 
     for (top, right, bottom, left), name in zip(face_locations_list, face_names):
@@ -107,6 +140,7 @@ if __name__ == '__main__':
         easy_face_reco(frame, known_face_encodings, known_face_names)
         cv2.imshow('Easy Facial Recognition App', frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
+            calcul_work_time(name_time)
             break
     print('[INFO] Stopping System')
     video_capture.release()
